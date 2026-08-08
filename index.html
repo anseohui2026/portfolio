@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>안서희 | 스포츠 비즈니스 기획자</title>
+<style>
+  :root {
+    --navy: #0f172a;
+    --accent: #2563eb;
+    --accent-light: #60a5fa;
+    --text-light: #f8fafc;
+    --text-muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    background: linear-gradient(160deg, var(--navy) 0%, #1e293b 100%);
+    color: var(--text-light);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    max-width: 640px;
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 56px 44px;
+    backdrop-filter: blur(6px);
+  }
+  .eyebrow {
+    color: var(--accent-light);
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  h1 {
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 18px;
+    letter-spacing: -0.5px;
+  }
+  .tagline {
+    font-size: 18px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 40px;
+    padding-left: 16px;
+    border-left: 3px solid var(--accent);
+  }
+  .section-title {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 44px;
+  }
+  .tag {
+    background: rgba(37, 99, 235, 0.15);
+    border: 1px solid rgba(96, 165, 250, 0.35);
+    color: var(--accent-light);
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .projects {
+    display: grid;
+    gap: 14px;
+  }
+  .project-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 18px 20px;
+    font-size: 15px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .project-card strong {
+    color: var(--text-light);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 16px;
+  }
+  .project-card a {
+    color: var(--accent-light);
+    text-decoration: none;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge {
+    font-size: 12px;
+    background: rgba(148,163,184,0.15);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  footer {
+    margin-top: 48px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  @media (max-width: 480px) {
+    .card { padding: 36px 24px; }
+    h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="eyebrow">Portfolio</div>
+    <h1>안서희</h1>
+    <p class="tagline">스포츠 비즈니스 기획자, 생각에 그치지 않고 실행하며 증명합니다.</p>
+
+    <div class="section-title">관심 분야</div>
+    <div class="tags">
+      <span class="tag">스포츠 마케팅</span>
+      <span class="tag">데이터 분석</span>
+      <span class="tag">포트폴리오 개발</span>
+    </div>
+
+    <div class="section-title">프로젝트</div>
+    <div class="projects">
+      <div class="project-card">
+        <div>
+          <strong>스포츠 데이터 분석 이론 수료</strong>
+          통계 · 트래킹 데이터 · 머신러닝 사례 학습 (2026 스포츠 마케팅 전문인력 양성사업)
+        </div>
+        <span class="badge">완료</span>
+      </div>
+      <div class="project-card">
+        <div>
+          <strong>MLB 2025 데이터 시각화</strong>
+          Statcast 기반 선수 기록 분석 페이지
+        </div>
+        <a href="viz.html">Coming Soon →</a>
+      </div>
+    </div>
+
+    <footer>© 2026 안서희 · sports business & data</footer>
+  </div>
+</body>
+</html>
