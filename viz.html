@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLB 2025 데이터 시각화 | 안서희</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #0f172a;
+    --accent: #2563eb;
+    --accent-light: #60a5fa;
+    --text-light: #f8fafc;
+    --text-muted: #94a3b8;
+    --red: #f87171;
+    --green: #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    background: linear-gradient(160deg, var(--navy) 0%, #1e293b 100%);
+    color: var(--text-light);
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  a.back { color: var(--accent-light); text-decoration: none; font-size: 14px; font-weight: 600; }
+  h1 { font-size: 30px; margin: 16px 0 6px; letter-spacing: -0.5px; }
+  .sub { color: var(--text-muted); margin-bottom: 32px; font-size: 15px; line-height: 1.6; }
+  .card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 28px;
+  }
+  .card h2 { font-size: 18px; margin-bottom: 4px; }
+  .card p.desc { color: var(--text-muted); font-size: 14px; margin-bottom: 18px; line-height: 1.6; }
+  canvas { max-height: 380px; }
+  .legend-note { font-size: 13px; color: var(--text-muted); margin-top: 12px; line-height: 1.6; }
+  .verify {
+    background: rgba(96,165,250,0.08);
+    border-left: 3px solid var(--accent-light);
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 16px;
+    line-height: 1.7;
+  }
+  .verify strong { color: var(--text-light); }
+  footer { text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="index.html" class="back">← 홈으로</a>
+  <h1>MLB 2025 데이터 시각화</h1>
+  <p class="sub">Statcast 기반 실제 2025시즌 데이터로 만든 분석 페이지입니다. 오전 이론 PART 2에서 배운 xBA(기대타율) 개념을 실제 251명 타자 데이터에 적용해봤습니다.</p>
+
+  <div class="card">
+    <h2>실제 타율 vs 기대타율(xBA) — 운은 얼마나 작용했나</h2>
+    <p class="desc">규정타석(PA 300 이상) 251명. 대각선 위(빨강)는 xBA보다 실제 타율이 낮은 '불운한' 타자, 대각선 아래(초록)는 실제 타율이 xBA보다 높은 '행운의' 타자입니다. 오타니와 이정후를 강조 표시했습니다.</p>
+    <canvas id="xbaChart"></canvas>
+    <div class="legend-note">점선 = BA와 xBA가 같은 기준선. 기준선에서 멀수록 '운'이 크게 작용했다는 뜻입니다.</div>
+    <div class="verify">
+      <strong>검증:</strong> 오타니(Shohei Ohtani) 2025시즌 실제 타율 .282, xBA .274 — 원본 CSV(tracking_expected_stats_2025.csv)와 대조 완료.
+      이정후(Lee, Jung Hoo)는 실제 타율 .266, xBA .277로 살짝 '불운'했던 것으로 나타났습니다(-0.011). 소속팀 데이터를 직접 열어 이 두 값을 대조해보세요.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2025 스프린트 스피드 TOP 10</h2>
+    <p class="desc">초당 이동 피트(ft/sec) 기준 가장 빠른 선수들. Trea Turner가 30.3ft/s로 1위입니다.</p>
+    <canvas id="sprintChart"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>오타니 쇼헤이 2025 구종 구성 (투수 등판 기준, 1,086구)</h2>
+    <p class="desc">포심 패스트볼이 39.9%(평균 98.4mph)로 가장 많고, 스위퍼가 21.1%로 뒤를 잇습니다.</p>
+    <canvas id="pitchChart"></canvas>
+  </div>
+
+  <footer>© 2026 안서희 · sports business & data · Statcast 데이터 기반</footer>
+</div>
+
+<script>
+const xbaData = [["Lindor, Francisco",732,0.267,0.26],["Devers, Rafael",729,0.252,0.244],["Ohtani, Shohei",727,0.282,0.274],["Schwarber, Kyle",724,0.24,0.249],["Olson, Matt",724,0.272,0.249],["Perdomo, Geraldo",720,0.29,0.278],["Soto, Juan",715,0.263,0.288],["Rodríguez, Julio",710,0.267,0.269],["Arozarena, Randy",709,0.238,0.227],["Alonso, Pete",709,0.272,0.274],["Raleigh, Cal",705,0.247,0.231],["Rooker, Brent",699,0.262,0.261],["De La Cruz, Elly",699,0.264,0.251],["Duran, Jarren",696,0.256,0.248],["Ramos, Heliot",695,0.256,0.242],["Kwan, Steven",693,0.272,0.273],["Tatis Jr., Fernando",691,0.268,0.272],["Wood, James",689,0.256,0.259],["Witt Jr., Bobby",687,0.295,0.285],["Adames, Willy",686,0.225,0.224],["Friedl, TJ",685,0.261,0.227],["Pasquantino, Vinnie",682,0.264,0.259],["Guerrero Jr., Vladimir",680,0.292,0.3],["Judge, Aaron",679,0.331,0.3],["Machado, Manny",678,0.275,0.271],["Arraez, Luis",675,0.292,0.287],["Ramírez, José",673,0.283,0.284],["Albies, Ozzie",667,0.24,0.243],["Garcia, Maikel",666,0.286,0.276],["Ward, Taylor",663,0.228,0.231],["Happ, Ian",663,0.243,0.256],["Betts, Mookie",663,0.258,0.267],["Turang, Brice",659,0.288,0.262],["Contreras, William",659,0.26,0.248],["Suárez, Eugenio",657,0.228,0.211],["Bellinger, Cody",656,0.272,0.25],["Greene, Riley",655,0.258,0.236],["Story, Trevor",654,0.263,0.249],["Reynolds, Bryan",654,0.245,0.259],["Altuve, Jose",654,0.265,0.237],["Crawford, J.P.",654,0.265,0.266],["Caminero, Junior",653,0.264,0.255],["Nimmo, Brandon",652,0.262,0.252],["Suzuki, Seiya",651,0.245,0.247],["Henderson, Gunnar",651,0.274,0.276],["Díaz, Yandy",651,0.3,0.285],["Holliday, Jackson",649,0.242,0.241],["Hoerner, Nico",649,0.297,0.292],["Torkelson, Spencer",649,0.24,0.226],["Crow-Armstrong, Pete",647,0.247,0.242],["Swanson, Dansby",645,0.244,0.267],["Yelich, Christian",644,0.264,0.245],["Carroll, Corbin",642,0.259,0.262],["Perez, Salvador",641,0.236,0.269],["Harris II, Michael",641,0.249,0.268],["Walker, Christian",640,0.238,0.233],["Turner, Trea",639,0.304,0.27],["Abrams, CJ",635,0.257,0.245],["Butler, Lawrence",630,0.234,0.229],["Bichette, Bo",628,0.311,0.295],["Torres, Gleyber",628,0.256,0.269],["Freeman, Freddie",627,0.295,0.268],["Soderstrom, Tyler",624,0.276,0.261],["Pages, Andy",624,0.272,0.258],["Edwards, Xavier",619,0.283,0.262],["Lee, Jung Hoo",617,0.266,0.277],["Lowe, Nathaniel",609,0.228,0.229],["Naylor, Josh",604,0.295,0.267],["Tucker, Kyle",597,0.266,0.27],["Volpe, Anthony",596,0.212,0.223],["Frelick, Sal",594,0.288,0.255],["Lopez, Otto",594,0.246,0.269],["Busch, Michael",592,0.261,0.262],["Ozuna, Marcell",592,0.232,0.239],["Chourio, Jackson",589,0.27,0.247],["Castellanos, Nick",589,0.25,0.242],["Clement, Ernie",588,0.277,0.26],["Beck, Jordan",588,0.258,0.231],["Rafaela, Ceddanne",587,0.249,0.242],["Springer, George",586,0.309,0.291],["McMahon, Ryan",586,0.214,0.219],["Ramírez, Agustín",585,0.231,0.259],["Correa, Carlos",584,0.276,0.28],["Nootbaar, Lars",583,0.234,0.231],["Grisham, Trent",581,0.235,0.248],["Harper, Bryce",580,0.261,0.268],["Goodman, Hunter",579,0.278,0.242],["McLain, Matt",577,0.22,0.212],["Langford, Wyatt",573,0.241,0.239],["Adell, Jo",573,0.236,0.26],["Hayes, Ke'Bryan",570,0.235,0.238],["Vargas, Miguel",569,0.234,0.237],["Steer, Spencer",568,0.238,0.219],["Larnach, Trevor",567,0.25,0.251],["Diaz, Yainer",567,0.256,0.268],["India, Jonathan",567,0.233,0.238],["Schanuel, Nolan",564,0.264,0.262],["Contreras, Willson",563,0.257,0.257],["Smith, Josh",563,0.251,0.247],["Stott, Bryson",560,0.257,0.247],["Yastrzemski, Mike",558,0.233,0.237],["Trout, Mike",556,0.232,0.236],["Marte, Ketel",556,0.283,0.285],["Neto, Zach",554,0.257,0.251],["Lowe, Brandon",553,0.256,0.253],["Bogaerts, Xander",552,0.263,0.267],["McCutchen, Andrew",551,0.239,0.258],["Realmuto, J.T.",550,0.257,0.253],["García, Adolis",547,0.227,0.232],["Gurriel Jr., Lourdes",546,0.248,0.256],["Hernández, Teoscar",546,0.247,0.25],["Burleson, Alec",546,0.29,0.272],["Sheets, Gavin",545,0.252,0.263],["O'Hearn, Ryan",544,0.281,0.269],["Cruz, Oneil",544,0.2,0.218],["Sosa, Lenyn",544,0.264,0.263],["Peña, Jeremy",543,0.304,0.27],["Buxton, Byron",542,0.264,0.249],["Rengifo, Luis",541,0.238,0.26],["Doyle, Brenton",538,0.233,0.239],["Winn, Masyn",537,0.253,0.24],["Chapman, Matt",535,0.231,0.243],["Semien, Marcus",534,0.23,0.243],["Goldschmidt, Paul",534,0.274,0.266],["Bell, Josh",533,0.237,0.256],["Chisholm Jr., Jazz",531,0.242,0.234],["Manzardo, Kyle",531,0.234,0.224],["Rice, Ben",530,0.255,0.28],["Lee, Brooks",527,0.236,0.234],["García Jr., Luis",526,0.252,0.281],["Polanco, Jorge",524,0.265,0.266],["Wilson, Jacob",523,0.311,0.277],["Langeliers, Shea",522,0.277,0.252],["Donovan, Brendan",515,0.287,0.28],["Cronenworth, Jake",515,0.246,0.225],["Wagaman, Eric",514,0.25,0.259],["Jung, Josh",511,0.251,0.245],["McKinstry, Zach",511,0.259,0.247],["Kirk, Alejandro",506,0.282,0.278],["Durbin, Caleb",506,0.256,0.255],["Ortiz, Joey",506,0.23,0.245],["Meidroth, Chase",505,0.253,0.254],["Bohm, Alec",504,0.287,0.275],["Lux, Gavin",503,0.269,0.243],["Barger, Addison",502,0.243,0.255],["Bader, Harrison",501,0.277,0.22],["Mullins, Cedric",498,0.216,0.204],["Sánchez, Jesús",497,0.237,0.242],["Bregman, Alex",495,0.273,0.254],["Smith, Cam",493,0.236,0.235],["France, Ty",490,0.257,0.259],["Kurtz, Nick",489,0.29,0.245],["Laureano, Ramón",488,0.281,0.27],["Conforto, Michael",486,0.199,0.233],["Martínez, Angel",484,0.224,0.215],["Merrill, Jackson",483,0.264,0.263],["Santana, Carlos",474,0.219,0.216],["Kepler, Max",474,0.216,0.243],["Arias, Gabriel",471,0.22,0.214],["Benintendi, Andrew",470,0.24,0.234],["Dingler, Dillon",469,0.278,0.29],["Thomas, Alek",469,0.249,0.242],["Keith, Colt",468,0.256,0.257],["Jeffers, Ryan",464,0.266,0.243],["Carpenter, Kerry",464,0.252,0.252],["Scott II, Victor",463,0.216,0.225],["Flores, Wilmer",463,0.241,0.225],["Vientos, Mark",463,0.233,0.246],["McNeil, Jeff",462,0.243,0.266],["Moniak, Mickey",461,0.27,0.262],["Kiner-Falefa, Isiah",459,0.262,0.245],["Frazier, Adam",459,0.267,0.244],["Stowers, Kyle",457,0.288,0.265],["Castro, Willi",454,0.226,0.234],["Herrera, Iván",452,0.284,0.271],["Bailey, Patrick",452,0.222,0.21],["O'Hoppe, Logan",451,0.213,0.228],["Pham, Tommy",449,0.245,0.246],["Wells, Austin",448,0.219,0.214],["Vaughn, Andrew",447,0.254,0.273],["Riley, Austin",447,0.26,0.246],["Baldwin, Drake",446,0.274,0.272],["Narváez, Carlos",446,0.241,0.22],["Seager, Corey",445,0.271,0.285],["Collins, Isaac",441,0.263,0.246],["Simpson, Chandler",441,0.295,0.295],["Paredes, Isaac",438,0.254,0.235],["Lukes, Nathan",438,0.255,0.259],["Shaw, Matt",437,0.226,0.237],["Arenado, Nolan",436,0.237,0.245],["Smith, Will",436,0.296,0.269],["Báez, Javier",436,0.257,0.23],["Lowe, Josh",435,0.22,0.24],["Heim, Jonah",433,0.213,0.219],["Baty, Brett",432,0.254,0.252],["Robert Jr., Luis",431,0.223,0.246],["Domínguez, Jasson",429,0.257,0.237],["Mangum, Jake",428,0.296,0.251],["Freeman, Tyler",428,0.281,0.278],["Marsh, Brandon",425,0.28,0.263],["Schneemann, Daniel",422,0.206,0.215],["Aranda, Jonathan",422,0.316,0.291],["Kelly, Carson",421,0.249,0.236],["Abreu, Wilyer",417,0.247,0.243],["Allen, Nick",416,0.221,0.22],["Hays, Austin",416,0.266,0.234],["Naylor, Bo",414,0.195,0.201],["Acuña Jr., Ronald",412,0.29,0.263],["Horwitz, Spencer",411,0.272,0.251],["Isbel, Kyle",409,0.255,0.22],["Gonzales, Nick",408,0.26,0.254],["Lewis, Royce",403,0.237,0.24],["Quero, Edgar",403,0.268,0.236],["Jones, Nolan",403,0.211,0.224],["Gorman, Nolan",402,0.205,0.196],["Dubón, Mauricio",398,0.241,0.247],["Walker, Jordan",396,0.215,0.207],["Wallner, Matt",392,0.202,0.202],["Urías, Ramón",391,0.241,0.227],["Tovar, Ezequiel",390,0.253,0.261],["Hicks, Liam",390,0.247,0.244],["Pagés, Pedro",389,0.23,0.208],["Muncy, Max",388,0.243,0.238],["Clemens, Kody",386,0.213,0.243],["Caratini, Victor",386,0.259,0.255],["Tauchman, Mike",385,0.263,0.244],["Rocchio, Brayan",383,0.233,0.246],["Pérez, Wenceel",383,0.244,0.242],["Meyers, Jake",381,0.292,0.269],["Edman, Tommy",377,0.225,0.274],["Triolo, Jared",376,0.227,0.239],["Burger, Jake",376,0.236,0.246],["Profar, Jurickson",371,0.245,0.23],["Caballero, José",370,0.236,0.218],["Giménez, Andrés",369,0.21,0.252],["Rutschman, Adley",365,0.22,0.241],["Young, Jacob",364,0.231,0.262],["Cowser, Colton",360,0.196,0.2],["Marte, Noelvi",360,0.263,0.245],["Mountcastle, Ryan",357,0.25,0.253],["Westburg, Jordan",352,0.265,0.253],["Lile, Daylen",351,0.299,0.302],["Fermin, Freddy",348,0.25,0.232],["Schmitt, Casey",348,0.237,0.256],["Bleday, JJ",344,0.212,0.197],["Iglesias, Jose",343,0.229,0.24],["Sanoja, Javier",342,0.243,0.251],["Stephenson, Tyler",342,0.231,0.216],["Gonzalez, Romy",341,0.305,0.276],["Taylor, Tyrone",341,0.223,0.257],["Andujar, Miguel",341,0.318,0.259]];
+
+const highlight = new Set(["Ohtani, Shohei", "Lee, Jung Hoo"]);
+const normalPts = [], hiPts = [], hiLabels = [];
+xbaData.forEach(([name, pa, ba, xba]) => {
+  if (highlight.has(name)) {
+    hiPts.push({x: xba, y: ba});
+    hiLabels.push(name);
+  } else {
+    normalPts.push({x: xba, y: ba});
+  }
+});
+
+new Chart(document.getElementById('xbaChart'), {
+  type: 'scatter',
+  data: {
+    datasets: [
+      {
+        label: '전체 타자 (251명)',
+        data: normalPts,
+        backgroundColor: 'rgba(96,165,250,0.35)',
+        pointRadius: 3
+      },
+      {
+        label: '오타니 / 이정후',
+        data: hiPts,
+        backgroundColor: '#fbbf24',
+        pointRadius: 7,
+        pointStyle: 'star'
+      },
+      {
+        label: '기준선 (BA = xBA)',
+        type: 'line',
+        data: [{x:0.19,y:0.19},{x:0.34,y:0.34}],
+        borderColor: 'rgba(148,163,184,0.5)',
+        borderDash: [6,6],
+        pointRadius: 0,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { title: { display: true, text: '기대타율 (xBA)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+      y: { title: { display: true, text: '실제 타율 (BA)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+    },
+    plugins: {
+      legend: { labels: { color: '#f8fafc' } },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            if (ctx.dataset.label.includes('오타니')) {
+              return hiLabels[ctx.dataIndex] + `: BA ${ctx.raw.y}, xBA ${ctx.raw.x}`;
+            }
+            return `BA ${ctx.raw.y}, xBA ${ctx.raw.x}`;
+          }
+        }
+      }
+    }
+  }
+});
+
+new Chart(document.getElementById('sprintChart'), {
+  type: 'bar',
+  data: {
+    labels: ["Turner","Witt Jr.","Scott II","Buxton","Hill","Rojas","Lockridge","White","McCarthy","Teodosio"],
+    datasets: [{
+      label: 'Sprint Speed (ft/sec)',
+      data: [30.3,30.2,30.2,30.2,30.1,30.1,30.1,29.9,29.9,29.9],
+      backgroundColor: '#60a5fa'
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+      y: { beginAtZero: false, min: 29, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+    },
+    plugins: { legend: { display: false } }
+  }
+});
+
+new Chart(document.getElementById('pitchChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['4-Seam Fastball (98.4mph)', 'Sweeper (85.2mph)', 'Slider (88.3mph)', 'Curveball (78.4mph)', 'Cutter (93.8mph)', 'Split-Finger (89.5mph)', 'Sinker (96.2mph)'],
+    datasets: [{
+      data: [39.9, 21.1, 11.0, 10.5, 6.4, 5.7, 5.4],
+      backgroundColor: ['#2563eb','#60a5fa','#34d399','#fbbf24','#f87171','#a78bfa','#f472b6']
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', font: {size: 11} } } }
+  }
+});
+</script>
+</body>
+</html>
